@@ -10,7 +10,7 @@ contract SRat{
     
     uint256 constant public initialSupply = 23000000000000; // 2.3 Trillion.
     
-    address federalReserveWallet; // I mean street rat coin...
+    address public federalReserveWallet; // I mean street rat coin...
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
   
@@ -39,19 +39,19 @@ contract SRat{
     }
     
     
-    function transferFEDCoin(address from, address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
+    function transfer(address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
         
-        require( (balanceOf[from] >= amount)); // greater than amount they control.
-        require( !banStatus[from] && !banStatus[to]); //If 1 banned member is envolved banned transactions of FEDCoin.
+        require( (balanceOf[msg.sender] >= amount)); // greater than amount they control.
+        require( !banStatus[msg.sender] && !banStatus[to]); //If 1 banned member is envolved banned transactions of FEDCoin.
         
-        balanceOf[from] -= amount;//update balances
+        balanceOf[msg.sender] -= amount;//update balances
         balanceOf[to] += amount;
         
         return true;
     }
     
     function withdrawalFEDCoin(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
-
+        require(recipient != federalReserveWallet); //Fed -> Fed makes no sense. Save gas.
         require(balanceOf[federalReserveWallet] >= amount);
         
         balanceOf[federalReserveWallet] -= amount; //Remove funds from main account fed holder.
