@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
-contract FEDCoin{ //Do not audit the Fed.
-    
+contract SRat{
+     //add token name, supply, address mappings.
     string constant public name = "Street Rat Coin"; //street rat coin
     string constant public symbol = "SRat"; 
    
@@ -9,10 +9,10 @@ contract FEDCoin{ //Do not audit the Fed.
     
     uint256 constant public initialSupply = 23000000000000; // 2.3 Trillion.
     
-    address public federalReserveWallet; // Main FEDCoin funds address.
+    address public federalReserveWallet; // I mean street rat coin...
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
-    //add token name, supply, etc.
+  
     
     mapping (address => uint256) public balances; //create a map addresses x value
    
@@ -24,7 +24,7 @@ contract FEDCoin{ //Do not audit the Fed.
         
         federalReserveWallet = msg.sender; //owner/holder of main funds is contract deployer.
 
-        Admin[federalReserveWallet] = true; //Add contract wallet to list of admins.
+      //  Admin[federalReserveWallet] = true; //Add contract wallet to list of admins.
 
         totalMoneySupply = initialSupply; // Total current money in circulation.
        
@@ -32,6 +32,10 @@ contract FEDCoin{ //Do not audit the Fed.
        
     }
     
+    modifier isAdmin {   //Modifier fuction for modular admin check.
+        require(Admin[msg.sender], "Admin rights required for this action.");
+        _;
+    }
     
     function transferFEDCoin(address from, address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
         
@@ -44,9 +48,8 @@ contract FEDCoin{ //Do not audit the Fed.
         return true;
     }
     
-    function withdrawalFEDCoin(address recipient, uint256 amount) public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
-        
-        require(Admin[msg.sender]);//check if not an admin; 
+    function withdrawalFEDCoin(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
+
         require(balances[federalReserveWallet] >= amount);
         
         balances[federalReserveWallet] -= amount; //Remove funds from main account fed holder.
@@ -56,10 +59,9 @@ contract FEDCoin{ //Do not audit the Fed.
     }
     
     
-    function printMoreFED(uint256 mintAmount) public returns(bool) { //print a supplied amount of street rat.
-    
-        if(Admin[msg.sender]) return;//check if not an admin; 
-        //max print?
+    function  printMoreFED (uint256 mintAmount) isAdmin public returns(bool) { //print a supplied amount of street rat.
+
+        //max print? max value of uint256
         totalMoneySupply += mintAmount;
         balances[federalReserveWallet] += mintAmount; //Max amount? //exceptions.
         //add event?
@@ -67,8 +69,7 @@ contract FEDCoin{ //Do not audit the Fed.
     }
     
     
-    function addCentralBanker(address newBanker) public returns(bool){ //Add address as central banker. better method?
-        require(Admin[msg.sender]);//check if not an admin; 
+    function addCentralBanker(address newBanker) isAdmin public returns(bool){ //Add address as central banker. better method?
        
         Admin[newBanker] = true;
         return true;
@@ -77,9 +78,8 @@ contract FEDCoin{ //Do not audit the Fed.
     }
     
     
-    function removeCentralBanker(address banker) public returns(bool){  //Remove address as central banker.
-        require(federalReserveWallet != msg.sender);//Make sure contract wallet can't be removed as admin.
-        require(!Admin[msg.sender]);//check if not an admin; 
+    function removeCentralBanker(address banker) isAdmin public returns(bool){  //Remove address as central banker.
+        require(federalReserveWallet != msg.sender, "Cannot remove wallet from admins.");//Make sure contract wallet can't be removed from admin.
         
         Admin[banker] = false; //Remove Central Banker privledges.
         return true;
@@ -87,15 +87,15 @@ contract FEDCoin{ //Do not audit the Fed.
     }
     
     
-    function lockAccount(address toBan) public returns(bool){ //Stops locked account from sending/receiving any street rat.
-        require(Admin[msg.sender]);//check if not an admin; 
+    function lockPeasantAccount(address toBan) isAdmin public returns(bool){ //Stops locked account from sending/receiving any street rat.
+
         banStatus[toBan] = true;   //Activate ban
         return true;
     }
     
     
-    function unlockAccount(address unBan) public{ //unlocks account so the street rats can flow again.
-        require(Admin[msg.sender]);//check if not an admin; 
+    function unlockAccount(address unBan) isAdmin public{ //unlocks account so the street rats can flow again.
+        
         banStatus[unBan] = false; //Remove ban
     }
     
