@@ -14,12 +14,12 @@ contract SRat{
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
   
-    
     mapping (address => uint256) public balanceOf; //create a map addresses x value
    
     mapping (address => bool) public banStatus;  //Maps address to their ban status. 1 == Banned || 0 == not banned.
     
     mapping (address => bool) public adminStatus; //Map admins or ppl allowed to print/widthdrawl from main fund.
+    
     
     function SRat() public{ //Coin constructor
         
@@ -33,12 +33,13 @@ contract SRat{
        
     }
     
+    
     modifier isAdmin {   //Modifier fuction for modular admin check.
         require(adminStatus[msg.sender]);
         _;
     }
     
-    
+
     function transfer(address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
         
         require( (balanceOf[msg.sender] >= amount)); // greater than amount they control.
@@ -50,7 +51,9 @@ contract SRat{
         return true;
     }
     
+    
     function withdrawalFEDCoin(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
+       
         require(recipient != federalReserveWallet); //Fed -> Fed makes no sense. Save gas.
         require(balanceOf[federalReserveWallet] >= amount);
         
@@ -81,6 +84,7 @@ contract SRat{
     
     
     function removeCentralBanker(address banker) isAdmin public returns(bool){  //Remove address as central banker.
+        
         require(federalReserveWallet != msg.sender);//Make sure contract wallet can't be removed from admin.
         
         adminStatus[banker] = false; //Remove Central Banker privledges.
@@ -102,15 +106,15 @@ contract SRat{
         return true;
     }
     
-    //Add is owned function. unique event error handling/ generic check type previledge?
-    
-      /*
-       function kill() public { //self-destruct function, 
-   if(msg.sender == owner) {
-    selfdestruct(owner); 
-        }
-      function() public payable{ //Callback function? function to run when paid in ETH.
-     //coming soon.
-    }*/
+   
+    function voidContract() public { //self-destruct function. It's been good....shut it down.
+        
+        require(msg.sender == federalReserveWallet);
+        selfdestruct(federalReserveWallet); 
+    }
+           
+     function() public payable{ 
+     //more to come
+    }
     
 }
