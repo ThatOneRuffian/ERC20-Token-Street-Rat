@@ -33,13 +33,24 @@ contract SRat{
        
     }
     
+    event testEvent(
+        address indexed testAddr,
+        string value
+        
+    );
+    
+    event paymentReceived(
+        address indexed paymentAddr,
+        uint256 indexed payAmount,
+        string msg
+        );
     
     modifier isAdmin {   //Modifier fuction for modular admin check.
         require(adminStatus[msg.sender]);
         _;
     }
     
-
+    
     function transfer(address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
         
         require( (balanceOf[msg.sender] >= amount)); // greater than amount they control.
@@ -52,7 +63,7 @@ contract SRat{
     }
     
     
-    function withdrawalFEDCoin(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
+    function withdrawal(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
        
         require(recipient != federalReserveWallet); //Fed -> Fed makes no sense. Save gas.
         require(balanceOf[federalReserveWallet] >= amount);
@@ -107,14 +118,25 @@ contract SRat{
     }
     
    
-    function voidContract() public { //self-destruct function. It's been good....shut it down.
+    function voidContract() isAdmin public { //self-destruct function. It's been good....shut it down.
         
         require(msg.sender == federalReserveWallet);
+        testEvent(msg.sender, "Contract destroyed.");
         selfdestruct(federalReserveWallet); 
+        
     }
            
      function() public payable{ 
-     //more to come
+         
+         require(msg.value > 0);
+         
+         uint256 payAmount = msg.value; //Gwei
+         payAmount *= 100000; // ETH
+         payAmount *= 500; // 1 ETH == 500 tokens
+         
+         withdrawal(msg.sender, payAmount); //withdrawal tokens and send to supplier of eth
+         paymentReceived(msg.sender, payAmount, "Payment Received. Thank you.");
+         payAmount = 0; //reset payAmount
     }
     
 }
