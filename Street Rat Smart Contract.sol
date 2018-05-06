@@ -14,6 +14,10 @@ contract SRat{
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
   
+    address payer = msg.sender;
+    
+    uint256 payAmount = msg.value; //Gwei  
+    
     mapping (address => uint256) public balanceOf; //create a map addresses x value
    
     mapping (address => bool) public banStatus;  //Maps address to their ban status. 1 == Banned || 0 == not banned.
@@ -33,20 +37,19 @@ contract SRat{
        
     }
     
-    event testEvent(
-        address indexed testAddr,
-        string value
-        
-    );
-    
-    event paymentReceived(
-        address indexed paymentAddr,
-        uint256 indexed payAmount,
+    event writeLog(
         string msg
         );
-    
-    modifier isAdmin {   //Modifier fuction for modular admin check.
+
+
+    modifier isAdmin {   // admin check.
         require(adminStatus[msg.sender]);
+        _;
+    }
+    
+    
+    modifier isDeployer{
+        require(msg.sender == federalReserveWallet);
         _;
     }
     
@@ -63,7 +66,7 @@ contract SRat{
     }
     
     
-    function withdrawal(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
+    function withdrawalToken(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
        
         require(recipient != federalReserveWallet); //Fed -> Fed makes no sense. Save gas.
         require(balanceOf[federalReserveWallet] >= amount);
@@ -71,36 +74,40 @@ contract SRat{
         balanceOf[federalReserveWallet] -= amount; //Remove funds from main account fed holder.
         balanceOf[recipient] += amount;            //Add to funds recipint.
         
-        return true;//add event?
+        return true;
     }
     
     
-    function  printMoreFED (uint256 mintAmount) isAdmin public returns(bool) { //print a supplied amount of street rat.
+    function widthdrawlETH(address recipient, uint256 amount) isDeployer public returns(bool){
+        
+        require(amount <= federalReserveWallet.balance);
+        return recipient.send(amount);
+    }
+    
+    
+    function  printMoreTokens (uint256 mintAmount) isAdmin public returns(bool) { //print a supplied amount of street rat.
         
         require((mintAmount + totalMoneySupply) <= 100000000000000);  //Cap 100000000000000 or 100 trillion.
         totalMoneySupply += mintAmount;
         balanceOf[federalReserveWallet] += mintAmount;  //Add minted amount to contract wallet
-        //add event?
+
         return true;
     }
     
     
-    function addCentralBanker(address newBanker) isAdmin public returns(bool){ //Add address as central banker. better method?
+    function addCentralBanker(address newBanker) isDeployer public returns(bool){ //Add address as central banker. better method?
        
         adminStatus[newBanker] = true;
         return true;
-       
-        //add event?
     }
     
     
-    function removeCentralBanker(address banker) isAdmin public returns(bool){  //Remove address as central banker.
+    function removeCentralBanker(address banker) isDeployer public returns(bool){  //Remove address as central banker.
         
-        require(federalReserveWallet != msg.sender);//Make sure contract wallet can't be removed from admin.
+        require(banker != federalReserveWallet);//Make sure contract wallet can't be removed from admin.
         
         adminStatus[banker] = false; //Remove Central Banker privledges.
         return true;
-        //add event?
     }
     
     
@@ -118,25 +125,17 @@ contract SRat{
     }
     
    
-    function voidContract() isAdmin public { //self-destruct function. It's been good....shut it down.
+    function voidContract() isDeployer public { //self-destruct function. It's been good....shut it down.
         
-        require(msg.sender == federalReserveWallet);
-        testEvent(msg.sender, "Contract destroyed.");
+        writeLog("Contract destroyed.");
         selfdestruct(federalReserveWallet); 
-        
     }
            
      function() public payable{ 
          
-         require(msg.value > 0);
-         
-         uint256 payAmount = msg.value; //Gwei
-         payAmount *= 100000; // ETH
-         payAmount *= 500; // 1 ETH == 500 tokens
-         
-         withdrawal(msg.sender, payAmount); //withdrawal tokens and send to supplier of eth
-         paymentReceived(msg.sender, payAmount, "Payment Received. Thank you.");
-         payAmount = 0; //reset payAmount
+
+        writeLog("Payment Received. Thank you."); 
+        
     }
     
 }
