@@ -8,16 +8,12 @@ contract SRat{
    
     uint8 constant public decimals = 2; //$0.00
     
-    uint256 constant public initialSupply = 23000000000000; // 2.3 Trillion.
+    uint256 constant public initialSupply = 2300000000000000; // 2.3 Trillion.
     
     address public federalReserveWallet; // I mean street rat coin...
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
   
-    address payer = msg.sender;
-    
-    uint256 payAmount = msg.value; //Gwei  
-    
     mapping (address => uint256) public balanceOf; //create a map addresses x value
    
     mapping (address => bool) public banStatus;  //Maps address to their ban status. 1 == Banned || 0 == not banned.
@@ -41,7 +37,7 @@ contract SRat{
         string msg
         );
 
-
+        
     modifier isAdmin {   // admin check.
         require(adminStatus[msg.sender]);
         _;
@@ -61,7 +57,8 @@ contract SRat{
         
         balanceOf[msg.sender] -= amount;//update balances
         balanceOf[to] += amount;
-        
+        writeLog("Token TX complete.");
+       
         return true;
     }
     
@@ -73,24 +70,35 @@ contract SRat{
         
         balanceOf[federalReserveWallet] -= amount; //Remove funds from main account fed holder.
         balanceOf[recipient] += amount;            //Add to funds recipint.
+        writeLog("Token withdrawal complete.");
+       
+        return true;
+    }
+    
+    
+    function widthdrawlmETH(address recipient, uint256 amount) isDeployer public returns(bool){ // widthdrawl ether from main contract in millieth.
+       
+        require(amount <= this.balance);
+        
+        uint64 toMilli = 10**15; //coefficient to convert wei to millieth
+        
+        amount *= toMilli; //convert wei to millieth.
+
+        recipient.transfer(amount);
+        writeLog("ETH widthdrawal TX generated.");
         
         return true;
     }
     
     
-    function widthdrawlETH(address recipient, uint256 amount) isDeployer public returns(bool){
-        
-        require(amount <= federalReserveWallet.balance);
-        return recipient.send(amount);
-    }
-    
-    
     function  printMoreTokens (uint256 mintAmount) isAdmin public returns(bool) { //print a supplied amount of street rat.
         
-        require((mintAmount + totalMoneySupply) <= 100000000000000);  //Cap 100000000000000 or 100 trillion.
+        require(mintAmount > 0 && (mintAmount + totalMoneySupply) <= 100000000000000);  //Cap 100000000000000 or 100 trillion.
+       
         totalMoneySupply += mintAmount;
         balanceOf[federalReserveWallet] += mintAmount;  //Add minted amount to contract wallet
-
+        writeLog("Token supply increased.");
+       
         return true;
     }
     
@@ -98,6 +106,8 @@ contract SRat{
     function addCentralBanker(address newBanker) isDeployer public returns(bool){ //Add address as central banker. better method?
        
         adminStatus[newBanker] = true;
+        writeLog("Central banker added.");
+      
         return true;
     }
     
@@ -107,13 +117,17 @@ contract SRat{
         require(banker != federalReserveWallet);//Make sure contract wallet can't be removed from admin.
         
         adminStatus[banker] = false; //Remove Central Banker privledges.
+        writeLog("Central banker removed.");
+       
         return true;
     }
     
     
     function lockAccount(address toBan) isAdmin public returns(bool){ //Stops locked account from sending/receiving any street rat coin.
-
+      
+        writeLog("Account Locked.");
         banStatus[toBan] = true;   //Activate ban
+       
         return true;
     }
     
@@ -121,6 +135,8 @@ contract SRat{
     function unlockAccount(address unBan) isAdmin public returns(bool){ //unlocks account so the street rats can flow again.
         
         banStatus[unBan] = false; //Remove ban
+        writeLog("Account unlocked.");
+       
         return true;
     }
     
@@ -128,14 +144,12 @@ contract SRat{
     function voidContract() isDeployer public { //self-destruct function. It's been good....shut it down.
         
         writeLog("Contract destroyed.");
-        selfdestruct(federalReserveWallet); 
+        selfdestruct(federalReserveWallet); //destroy contract and return eth funds to provided addr.
     }
            
      function() public payable{ 
-         
 
         writeLog("Payment Received. Thank you."); 
-        
     }
     
 }
