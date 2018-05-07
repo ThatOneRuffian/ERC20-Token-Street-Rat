@@ -10,10 +10,12 @@ contract SRat{
     
     uint256 constant public initialSupply = 2300000000000000; // 2.3 Trillion.
     
+    uint256 constant public maxSupply = 10000000000000000;
+    
     address public federalReserveWallet; // I mean street rat coin...
 
     uint256 public totalMoneySupply = 0; //keeps track of total money supply.
-  
+
     mapping (address => uint256) public balanceOf; //create a map addresses x value
    
     mapping (address => bool) public banStatus;  //Maps address to their ban status. 1 == Banned || 0 == not banned.
@@ -30,7 +32,6 @@ contract SRat{
         totalMoneySupply = initialSupply; // Total current money in circulation.
        
         balanceOf[federalReserveWallet] = initialSupply; //Initialize Central bank starting balance minus payoffs.
-       
     }
     
     event writeLog(
@@ -49,21 +50,20 @@ contract SRat{
         _;
     }
     
-    
-    function transfer(address to, uint256 amount ) public returns(bool) { //Transfer street rat from one person to another.
+
+    function transfer(address to, uint256 amount ) public{ //Transfer street rat from one person to another.
         
         require( (balanceOf[msg.sender] >= amount)); // greater than amount they control.
-        require( !banStatus[msg.sender] && !banStatus[to]); //If 1 banned member is envolved banned transactions of FEDCoin.
+        require( !banStatus[msg.sender] && !banStatus[to]); //If 1 banned member is envolved transaction is cancled.
         
         balanceOf[msg.sender] -= amount;//update balances
         balanceOf[to] += amount;
         writeLog("Token TX complete.");
        
-        return true;
     }
     
     
-    function withdrawalToken(address recipient, uint256 amount) isAdmin public returns (bool){ //Withdrawl funds from main wallet. Requires admin rights.
+    function withdrawalToken(address recipient, uint256 amount) isAdmin public{ //Withdrawl funds from main wallet. Requires admin rights.
        
         require(recipient != federalReserveWallet); //Fed -> Fed makes no sense. Save gas.
         require(balanceOf[federalReserveWallet] >= amount);
@@ -72,7 +72,6 @@ contract SRat{
         balanceOf[recipient] += amount;            //Add to funds recipint.
         writeLog("Token withdrawal complete.");
        
-        return true;
     }
     
     
@@ -91,53 +90,54 @@ contract SRat{
     }
     
     
-    function  printMoreTokens (uint256 mintAmount) isAdmin public returns(bool) { //print a supplied amount of street rat.
+    function  printMoreTokens (uint256 mintAmount) isAdmin public{ //print a supplied amount of street rat.
         
-        require(mintAmount > 0 && (mintAmount + totalMoneySupply) <= 100000000000000);  //Cap 100000000000000 or 100 trillion.
+        require(mintAmount > 0);
+        require(totalMoneySupply != maxSupply);
+        
+        if( (mintAmount + totalMoneySupply) >= maxSupply){  //Cap 100000000000000 or 100 trillion. If overprint set to max.
+           
+            totalMoneySupply = maxSupply;
+            balanceOf[federalReserveWallet] = maxSupply;  //Add minted amount to contract wallet
+            writeLog("Max token supply reached.");
+        }
        
-        totalMoneySupply += mintAmount;
-        balanceOf[federalReserveWallet] += mintAmount;  //Add minted amount to contract wallet
-        writeLog("Token supply increased.");
-       
-        return true;
+        else{ //print more tokens
+        
+            totalMoneySupply += mintAmount;
+            balanceOf[federalReserveWallet] += mintAmount;  //Add minted amount to contract wallet
+            writeLog("Token supply increased.");
+        }
     }
     
     
-    function addCentralBanker(address newBanker) isDeployer public returns(bool){ //Add address as central banker. better method?
+    function addCentralBanker(address newBanker) isDeployer public{ //Add address as central banker. better method?
        
         adminStatus[newBanker] = true;
         writeLog("Central banker added.");
-      
-        return true;
     }
     
     
-    function removeCentralBanker(address banker) isDeployer public returns(bool){  //Remove address as central banker.
+    function removeCentralBanker(address banker) isDeployer public{  //Remove address as central banker.
         
         require(banker != federalReserveWallet);//Make sure contract wallet can't be removed from admin.
         
         adminStatus[banker] = false; //Remove Central Banker privledges.
         writeLog("Central banker removed.");
-       
-        return true;
     }
     
     
-    function lockAccount(address toBan) isAdmin public returns(bool){ //Stops locked account from sending/receiving any street rat coin.
+    function lockAccount(address toBan) isAdmin public{ //Stops locked account from sending/receiving any street rat coin.
       
         writeLog("Account Locked.");
         banStatus[toBan] = true;   //Activate ban
-       
-        return true;
     }
     
     
-    function unlockAccount(address unBan) isAdmin public returns(bool){ //unlocks account so the street rats can flow again.
+    function unlockAccount(address unBan) isAdmin public{ //unlocks account so the street rats can flow again.
         
         banStatus[unBan] = false; //Remove ban
         writeLog("Account unlocked.");
-       
-        return true;
     }
     
    
@@ -147,7 +147,8 @@ contract SRat{
         selfdestruct(federalReserveWallet); //destroy contract and return eth funds to provided addr.
     }
            
-     function() public payable{ 
+           
+     function() public payable{ //Take eth donations.
 
         writeLog("Payment Received. Thank you."); 
     }
