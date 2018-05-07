@@ -25,7 +25,7 @@ Testing ERC20 token based roughly on a central banking model. Deploy your own to
    Receive and transfer ETH from smart contract.
   </li>
      <li>
-   Increasable token supply.
+   Increasable token supply (Admin only).
   </li>
        <li>
    Voidable contract.
