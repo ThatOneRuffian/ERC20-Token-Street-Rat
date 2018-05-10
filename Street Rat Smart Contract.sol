@@ -51,11 +51,11 @@ contract SRat{
     }
     
 
-    function transfer(address to, uint256 amount ) public{ //Transfer street rat from one person to another.
-        
+    function transfer(address to, uint256 tx_amount ) public{ //Transfer street rat from one person to another.
+
         require( (balanceOf[msg.sender] >= amount)); // greater than amount they control.
         require( !banStatus[msg.sender] && !banStatus[to]); //If 1 banned member is envolved transaction is cancled.
-        
+	
         balanceOf[msg.sender] -= amount;//update balances
         balanceOf[to] += amount;
         writeLog("Token TX complete.");
@@ -78,12 +78,13 @@ contract SRat{
     function widthdrawlmETH(address recipient, uint256 amount) isDeployer public returns(bool){ // widthdrawl ether from main contract in millieth.
        
         require(amount <= this.balance);
-        
+        require(recipient != 0);
+
         uint64 toMilli = 10**15; //coefficient to convert wei to millieth
         
         amount *= toMilli; //convert wei to millieth.
 
-        recipient.transfer(amount);
+        recipient.transfer(amount); //milli eth?
         writeLog("ETH widthdrawal TX generated.");
         
         return true;
