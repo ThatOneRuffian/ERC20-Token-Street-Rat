@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-contract Constructor{
+contract SRat{
      //add token name, supply, address mappings.
     string constant public name = "Street Rat Coin"; //street rat coin
 
@@ -23,7 +23,7 @@ contract Constructor{
     mapping (address => bool) public adminStatus; //Map admins or ppl allowed to print/widthdrawl from main fund.
 
 
-    function SRat() public{ //Coin constructor
+    function Constructor() public{ //Coin constructor
 
         federalReserveWallet = msg.sender; //owner/holder of main funds is contract deployer.
 
